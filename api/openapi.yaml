@@ -1,0 +1,304 @@
+openapi: 3.0.3
+info:
+  title: Portal do Titular — API de Solicitações LGPD
+  version: 1.1.0
+  description: >
+    API pública do Portal do Titular da Aurora Varejo. Cada erro de regra de negócio
+    retorna o código da regra violada (RNxx), rastreável ao documento de requisitos.
+servers:
+  - url: http://localhost:5000/v1
+tags:
+  - name: Titular
+  - name: Backoffice
+paths:
+  /solicitacoes:
+    post:
+      tags: [Titular]
+      summary: Abre uma solicitação e envia o código de verificação (RF01, RF02)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NovaSolicitacao'
+            example:
+              cpf: '52998224725'
+              email: ana@email.com
+              tipo: REVOGACAO_CONSENTIMENTO
+      responses:
+        '201':
+          description: Solicitação aberta, aguardando validação de identidade
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Solicitacao'
+        '400':
+          $ref: '#/components/responses/JsonInvalido'
+        '409':
+          description: RN04 — já existe solicitação em aberto do mesmo tipo
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Erro'
+                  - type: object
+                    properties:
+                      protocolo_existente:
+                        type: string
+        '422':
+          description: RN03 — CPF inválido, ou e-mail/tipo inválidos (RF01)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+  /solicitacoes/{protocolo}:
+    get:
+      tags: [Titular]
+      summary: Consulta o andamento pelo protocolo (RF04)
+      parameters:
+        - $ref: '#/components/parameters/Protocolo'
+      responses:
+        '200':
+          description: Dados da solicitação, sem dados pessoais completos (RNF04)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Solicitacao'
+        '404':
+          $ref: '#/components/responses/NaoEncontrada'
+  /solicitacoes/{protocolo}/validacao:
+    post:
+      tags: [Titular]
+      summary: Valida a identidade com o código recebido por e-mail (RF03, RN05)
+      parameters:
+        - $ref: '#/components/parameters/Protocolo'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [codigo]
+              properties:
+                codigo:
+                  type: string
+                  pattern: '^[0-9]{6}$'
+      responses:
+        '200':
+          description: Identidade validada; prazo de 15 dias iniciado (RN01)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Solicitacao'
+        '409':
+          description: A solicitação não está aguardando validação
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+        '422':
+          description: Código incorreto ou expirado
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Erro'
+                  - type: object
+                    properties:
+                      tentativas_restantes:
+                        type: integer
+        '423':
+          description: Tentativas esgotadas; solicitação encerrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+  /solicitacoes/{protocolo}/reenvio-codigo:
+    post:
+      tags: [Titular]
+      summary: Gera e envia um novo código, invalidando o anterior
+      parameters:
+        - $ref: '#/components/parameters/Protocolo'
+      responses:
+        '202':
+          description: Novo código enviado
+        '409':
+          description: A solicitação não está aguardando validação
+  /backoffice/fila:
+    get:
+      tags: [Backoffice]
+      summary: Fila do DPO ordenada pelo prazo, com alertas (RF05, RN08)
+      security:
+        - TokenBackoffice: []
+      responses:
+        '200':
+          description: Solicitações em andamento
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  em_alerta:
+                    type: integer
+                  itens:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/Solicitacao'
+                        - type: object
+                          properties:
+                            alerta_prazo:
+                              type: boolean
+        '401':
+          $ref: '#/components/responses/NaoAutorizado'
+  /backoffice/solicitacoes/{protocolo}/conclusao:
+    post:
+      tags: [Backoffice]
+      summary: Conclui a solicitação e envia a resposta ao titular
+      security:
+        - TokenBackoffice: []
+      parameters:
+        - $ref: '#/components/parameters/Protocolo'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [resposta]
+              properties:
+                resposta:
+                  type: string
+      responses:
+        '200':
+          description: Solicitação concluída
+        '409':
+          description: RN02 — identidade ainda não validada
+        '401':
+          $ref: '#/components/responses/NaoAutorizado'
+  /backoffice/solicitacoes/{protocolo}/auditoria:
+    get:
+      tags: [Backoffice]
+      summary: Trilha de auditoria da solicitação (RN10)
+      security:
+        - TokenBackoffice: []
+      parameters:
+        - $ref: '#/components/parameters/Protocolo'
+      responses:
+        '200':
+          description: Eventos em ordem cronológica
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  protocolo:
+                    type: string
+                  eventos:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EventoAuditoria'
+        '401':
+          $ref: '#/components/responses/NaoAutorizado'
+components:
+  securitySchemes:
+    TokenBackoffice:
+      type: apiKey
+      in: header
+      name: X-Backoffice-Token
+  parameters:
+    Protocolo:
+      name: protocolo
+      in: path
+      required: true
+      schema:
+        type: string
+        example: LGPD-2026-000001
+  responses:
+    JsonInvalido:
+      description: Corpo da requisição não é um JSON válido em UTF-8
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Erro'
+    NaoEncontrada:
+      description: Protocolo não encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Erro'
+    NaoAutorizado:
+      description: Token de backoffice ausente ou inválido
+  schemas:
+    TipoSolicitacao:
+      type: string
+      enum:
+        - CONFIRMACAO
+        - ACESSO
+        - CORRECAO
+        - EXCLUSAO
+        - PORTABILIDADE
+        - REVOGACAO_CONSENTIMENTO
+        - INFO_COMPARTILHAMENTO
+    NovaSolicitacao:
+      type: object
+      required: [cpf, email, tipo]
+      properties:
+        cpf:
+          type: string
+          description: Com ou sem pontuação
+        email:
+          type: string
+          format: email
+        tipo:
+          $ref: '#/components/schemas/TipoSolicitacao'
+    Solicitacao:
+      type: object
+      properties:
+        protocolo:
+          type: string
+          example: LGPD-2026-000001
+        tipo:
+          $ref: '#/components/schemas/TipoSolicitacao'
+        status:
+          type: string
+          enum: [AGUARDANDO_VALIDACAO, EM_ANDAMENTO, CONCLUIDA, ENCERRADA_SEM_VALIDACAO]
+        cpf:
+          type: string
+          example: '***.982.247-**'
+        aberta_em:
+          type: string
+          format: date-time
+        prazo:
+          type: string
+          format: date
+        dias_restantes:
+          type: integer
+        resposta:
+          type: string
+          description: Presente apenas quando a solicitação está concluída
+    EventoAuditoria:
+      type: object
+      properties:
+        momento:
+          type: string
+          format: date-time
+        ator:
+          type: string
+          example: titular
+        acao:
+          type: string
+          example: IDENTIDADE_VALIDADA
+        detalhe:
+          type: string
+    Erro:
+      type: object
+      properties:
+        regra:
+          type: string
+          example: RN03
+        erro:
+          type: string
+          example: CPF inválido
