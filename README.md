@@ -8,6 +8,12 @@
 
 **Solução proposta:** um portal de autoatendimento onde o próprio cliente abre, acompanha e recebe a resposta das solicitações, com orquestração automática entre CRM, ERP e plataforma de marketing.
 
+## Demonstração visual
+
+![Página de demonstração do Portal do Titular](docs/img/demonstracao.png)
+
+Ao rodar o MVP, a página `http://127.0.0.1:5000` permite fazer o fluxo inteiro sem terminal: abrir a solicitação como cliente, receber o código num e-mail simulado, validar a identidade, responder como DPO e ver a trilha de auditoria. Um controle de **data simulada** avança os dias para mostrar o alerta de prazo (RN08) e o encerramento automático (RN09), e cada recusa da API aparece com o código da regra de negócio que a causou.
+
 ---
 
 ## O que este projeto demonstra
@@ -66,7 +72,9 @@ python -m unittest discover -s tests -v
 python -m app.main
 ```
 
-A API sobe em `http://127.0.0.1:5000`. Deixe esse terminal rodando: ele também faz o papel da caixa de e-mail, mostrando os códigos de verificação. Abra um **segundo terminal** para os comandos abaixo.
+Abra `http://127.0.0.1:5000` no navegador para usar a **demonstração visual**. A lista de endpoints da API fica em `http://127.0.0.1:5000/v1`.
+
+Para testar pela linha de comando, deixe esse terminal rodando (ele também mostra os e-mails com os códigos de verificação) e abra um **segundo terminal** para os comandos abaixo.
 
 ```powershell
 $base = "http://127.0.0.1:5000/v1"
@@ -115,7 +123,9 @@ curl -X POST http://127.0.0.1:5000/v1/solicitacoes \
 
 ### Testes
 
-São 24 testes automatizados, e cada um referencia a regra de negócio que valida.
+São 31 testes automatizados, e cada um referencia a regra de negócio que valida.
+
+> O **modo demonstração** (e-mail simulado na página e data ajustável) vem ligado por padrão. Para desligar, defina `MODO_DEMO=0` antes de rodar. Ele existe só para apresentação e nunca deve ir para produção, porque expõe os códigos de verificação.
 
 > Os dados ficam em memória: ao reiniciar o servidor (inclusive ao salvar um arquivo `.py` com o modo debug ligado), as solicitações são apagadas.
 
@@ -139,7 +149,7 @@ portal-do-titular/
 ├── docs/            estudo de caso, requisitos, BPMN, backlog e proposta
 ├── api/             contrato OpenAPI 3
 ├── features/        critérios de aceite em Gherkin (BDD)
-├── app/             MVP em Flask com as regras de negócio isoladas
+├── app/             MVP em Flask com as regras de negócio isoladas e a página de demonstração
 └── tests/           testes automatizados rastreados às regras
 ```
 

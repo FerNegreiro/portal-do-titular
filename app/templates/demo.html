@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portal do Titular — Demonstração</title>
+<style>
+:root {
+  color-scheme: light;
+  --fundo: #E9EEF2;
+  --superficie: #FFFFFF;
+  --papel: #FBFCFD;
+  --tinta: #14213D;
+  --tinta-suave: #55627A;
+  --linha: #CBD3DD;
+  --acento: #1F5C99;
+  --acento-texto: #FFFFFF;
+  --ok: #2D7A4B;
+  --alerta: #A35F00;
+  --erro: #B3261E;
+  --fonte: "Bahnschrift", "DIN Alternate", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --fundo: #10161F;
+    --superficie: #18212D;
+    --papel: #1D2836;
+    --tinta: #E6ECF3;
+    --tinta-suave: #9AA7B8;
+    --linha: #2E3C4E;
+    --acento: #7DB3F0;
+    --acento-texto: #10161F;
+    --ok: #6CC08F;
+    --alerta: #F0B44C;
+    --erro: #F2827A;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--tinta);
+  font-family: var(--fonte);
+  font-size: 15px;
+  line-height: 1.5;
+}
+.conteudo { max-width: 1320px; margin: 0 auto; padding: 32px 24px 48px; }
+h1, h2, h3, h4 { margin: 0; line-height: 1.2; font-weight: 600; }
+p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+
+.topo {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 32px;
+  align-items: end;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--linha);
+  margin-bottom: 28px;
+}
+.topo h1 { font-size: 2.6rem; font-weight: 700; letter-spacing: -0.01em; }
+.topo .resumo { margin-top: 10px; max-width: 60ch; color: var(--tinta-suave); font-size: 1.05rem; }
+.topo .links { margin-top: 14px; display: flex; gap: 18px; flex-wrap: wrap; }
+.topo a { color: var(--acento); font-weight: 600; }
+.roteiro { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; counter-reset: passo; }
+.roteiro li {
+  counter-increment: passo;
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+.roteiro li::before {
+  content: counter(passo);
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--acento);
+  color: var(--acento);
+  font-weight: 700;
+}
+
+.grade { display: grid; grid-template-columns: 1fr 0.85fr 1.45fr; gap: 20px; align-items: start; }
+.painel {
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+  border-radius: 10px;
+  padding: 22px;
+  min-width: 0;
+}
+.painel > h2 { font-size: 1.3rem; }
+.painel > .nota { margin-top: 4px; color: var(--tinta-suave); font-size: 0.92rem; }
+
+.campos { display: grid; gap: 14px; margin-top: 18px; }
+label { display: grid; gap: 4px; font-weight: 600; font-size: 0.92rem; }
+input, select, textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--linha);
+  border-radius: 6px;
+  background: var(--papel);
+  font-weight: 400;
+}
+textarea { resize: vertical; min-height: 84px; }
+.acoes { display: flex; gap: 10px; flex-wrap: wrap; }
+.botao {
+  border: 1px solid var(--acento);
+  background: var(--acento);
+  color: var(--acento-texto);
+  padding: 9px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.botao.secundario { background: transparent; color: var(--acento); }
+.botao:disabled { opacity: 0.5; cursor: not-allowed; }
+.botao.pequeno { padding: 5px 10px; font-size: 0.88rem; }
+
+.comprovante {
+  position: relative;
+  margin-top: 22px;
+  background: var(--papel);
+  border: 1px solid var(--linha);
+  border-radius: 8px;
+}
+.comprovante .canhoto { padding: 18px 20px 16px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.comprovante .rotulo { color: var(--tinta-suave); font-size: 0.88rem; }
+.comprovante .numero {
+  font-size: clamp(1.35rem, 1.9vw, 1.75rem);
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-stretch: condensed;
+  letter-spacing: 0.01em;
+}
+.picote { position: relative; border-top: 2px dashed var(--linha); }
+.picote::before, .picote::after {
+  content: "";
+  position: absolute;
+  top: -10px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+}
+.picote::before { left: -10px; clip-path: inset(0 0 0 50%); }
+.picote::after { right: -10px; clip-path: inset(0 50% 0 0); }
+.comprovante .corpo { padding: 16px 20px 20px; display: grid; gap: 16px; }
+.dados { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin: 0; }
+.dados div { min-width: 0; }
+.dados dt { color: var(--tinta-suave); font-size: 0.85rem; }
+.dados dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.carimbo {
+  flex-shrink: 0;
+  border: 2.5px solid currentColor;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transform: rotate(-5deg);
+  color: var(--acento);
+  white-space: nowrap;
+}
+.carimbo[data-status="EM_ANDAMENTO"] { color: var(--alerta); }
+.carimbo[data-status="CONCLUIDA"] { color: var(--ok); }
+.carimbo[data-status="ENCERRADA_SEM_VALIDACAO"] { color: var(--erro); }
+.carimbo.batendo { animation: bater 420ms cubic-bezier(.2, 1.4, .4, 1); }
+@keyframes bater {
+  from { transform: rotate(-5deg) scale(1.6); opacity: 0; }
+  to { transform: rotate(-5deg) scale(1); opacity: 1; }
+}
+
+.resposta { border-left: 3px solid var(--ok); padding: 6px 0 6px 12px; }
+.resposta p:first-child { color: var(--tinta-suave); font-size: 0.85rem; }
+.codigo-linha { display: grid; gap: 10px; }
+.codigo-linha input { font-size: 1.3rem; letter-spacing: 0.3em; font-variant-numeric: tabular-nums; text-align: center; max-width: 220px; }
+
+.minhas { margin-top: 22px; }
+.minhas h3 { font-size: 0.98rem; }
+.minhas ul { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.minhas button {
+  border: 1px solid var(--linha);
+  background: transparent;
+  border-radius: 999px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.88rem;
+}
+.minhas button[aria-pressed="true"] { border-color: var(--acento); color: var(--acento); font-weight: 600; }
+
+.mensagens { list-style: none; padding: 0; margin: 18px 0 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; max-height: 620px; overflow-y: auto; }
+.mensagem { border: 1px solid var(--linha); border-radius: 8px; padding: 12px 14px; background: var(--papel); }
+.mensagem .cabecalho { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 8px; color: var(--tinta-suave); font-size: 0.82rem; }
+.mensagem .texto { margin-top: 6px; overflow-wrap: anywhere; word-break: break-word; }
+.mensagem .codigo { font-size: 1.15rem; letter-spacing: 0.12em; font-variant-numeric: tabular-nums; }
+.mensagem .botao { margin-top: 10px; }
+.vazio { margin-top: 18px; color: var(--tinta-suave); border: 1px dashed var(--linha); border-radius: 8px; padding: 18px; text-align: center; }
+
+.relogio {
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--papel);
+  border: 1px solid var(--linha);
+}
+.relogio strong { font-variant-numeric: tabular-nums; }
+.rolagem { overflow-x: auto; margin-top: 16px; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th { text-align: left; font-size: 0.85rem; color: var(--tinta-suave); font-weight: 600; padding: 8px 6px; border-bottom: 1px solid var(--linha); }
+td { padding: 10px 6px; border-bottom: 1px solid var(--linha); white-space: nowrap; }
+td.direito { white-space: normal; min-width: 90px; }
+tbody tr { cursor: pointer; }
+tbody tr:hover, tbody tr[aria-selected="true"] { background: var(--papel); }
+tbody tr[aria-selected="true"] td:first-child { box-shadow: inset 3px 0 0 var(--acento); }
+.prazo-alerta { color: var(--alerta); font-weight: 700; white-space: normal; }
+.selo-alerta {
+  display: inline-block;
+  margin: 2px 0 0 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--alerta);
+  color: var(--superficie);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.detalhe { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--linha); display: grid; gap: 16px; }
+.detalhe h3 { font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.detalhe h4 { font-size: 0.95rem; }
+.linha-do-tempo { list-style: none; margin: 8px 0 0; padding: 0 0 0 18px; border-left: 2px solid var(--linha); display: grid; gap: 12px; }
+.linha-do-tempo li { position: relative; }
+.linha-do-tempo li::before {
+  content: "";
+  position: absolute;
+  left: -25px;
+  top: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--acento);
+  border: 2px solid var(--superficie);
+}
+.linha-do-tempo li.falha::before { background: var(--erro); }
+.linha-do-tempo li.fim::before { background: var(--ok); }
+.linha-do-tempo li.atraso::before { background: var(--alerta); }
+.linha-do-tempo li.atraso .detalhe-evento { color: var(--alerta); font-weight: 700; }
+.linha-do-tempo .quando { color: var(--tinta-suave); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+.linha-do-tempo .detalhe-evento { color: var(--tinta-suave); font-size: 0.88rem; }
+
+.registro { margin-top: 20px; }
+.registro ol { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; max-height: 280px; overflow-y: auto; }
+.registro li { display: grid; grid-template-columns: 74px 1fr auto; gap: 12px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--linha); }
+.registro .regra {
+  text-align: center;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border: 1.5px solid currentColor;
+}
+.registro li.recusa .regra { color: var(--erro); }
+.registro li.sucesso .regra { color: var(--ok); }
+.registro .hora { color: var(--tinta-suave); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+
+.rodape { margin-top: 28px; color: var(--tinta-suave); font-size: 0.88rem; }
+[hidden] { display: none !important; }
+
+@media (max-width: 1100px) {
+  .grade { grid-template-columns: 1fr 1fr; }
+  .painel.dpo { grid-column: 1 / -1; }
+}
+@media (max-width: 760px) {
+  .conteudo { padding: 20px 14px 36px; }
+  .topo { grid-template-columns: 1fr; }
+  .topo h1 { font-size: 2rem; }
+  .grade { grid-template-columns: 1fr; }
+  .dados { grid-template-columns: 1fr; }
+  .registro li { grid-template-columns: 64px 1fr; }
+  .registro .hora { grid-column: 2; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .carimbo.batendo { animation: none; }
+}
+</style>
+</head>
+<body data-demo="{{ '1' if modo_demo else '0' }}" data-token="{{ token }}">
+<div class="conteudo">
+
+<header class="topo">
+  <div>
+    <h1>Portal do Titular</h1>
+    <p class="resumo">Demonstração do MVP de autoatendimento LGPD da Aurora Varejo, uma empresa fictícia. Faça o papel do cliente e do DPO e veja as regras de negócio funcionando de ponta a ponta.</p>
+    <p class="links">
+      <a href="https://github.com/FerNegreiro/portal-do-titular">Código e estudo de caso no GitHub</a>
+      <a href="/v1">Endpoints da API</a>
+    </p>
+  </div>
+  <ol class="roteiro">
+    <li>Como cliente, abra uma solicitação.</li>
+    <li>Pegue o código no e-mail simulado e valide sua identidade.</li>
+    <li>Como DPO, responda a solicitação e confira a trilha de auditoria.</li>
+  </ol>
+</header>
+
+<main class="grade">
+
+  <section class="painel titular" aria-labelledby="titulo-cliente">
+    <h2 id="titulo-cliente">Cliente</h2>
+    <p class="nota">Abra um pedido usando um dos direitos previstos na LGPD.</p>
+
+    <form id="form-abrir" class="campos" novalidate>
+      <label>CPF
+        <input id="cpf" name="cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14">
+      </label>
+      <label>E-mail
+        <input id="email" name="email" type="email" autocomplete="off" placeholder="voce@email.com">
+      </label>
+      <label>Direito solicitado
+        <select id="tipo" name="tipo">
+          <option value="ACESSO">Acesso aos meus dados</option>
+          <option value="CONFIRMACAO">Confirmação de tratamento</option>
+          <option value="CORRECAO">Correção de dados</option>
+          <option value="EXCLUSAO">Exclusão de dados</option>
+          <option value="PORTABILIDADE">Portabilidade</option>
+          <option value="REVOGACAO_CONSENTIMENTO">Revogação de consentimento</option>
+          <option value="INFO_COMPARTILHAMENTO">Com quem meus dados são compartilhados</option>
+        </select>
+      </label>
+      <div class="acoes">
+        <button class="botao" type="submit">Abrir solicitação</button>
+        <button class="botao secundario" type="button" id="exemplo">Preencher com dados de exemplo</button>
+      </div>
+    </form>
+
+    <article id="comprovante" class="comprovante" hidden aria-live="polite">
+      <div class="canhoto">
+        <div>
+          <p class="rotulo">Protocolo</p>
+          <p class="numero" id="c-protocolo"></p>
+        </div>
+        <span class="carimbo" id="c-status"></span>
+      </div>
+      <div class="picote"></div>
+      <div class="corpo">
+        <dl class="dados">
+          <div><dt>Direito</dt><dd id="c-tipo"></dd></div>
+          <div><dt>CPF</dt><dd id="c-cpf"></dd></div>
+          <div><dt>Aberta em</dt><dd id="c-aberta"></dd></div>
+          <div><dt>Prazo legal</dt><dd id="c-prazo">Começa após a validação</dd></div>
+        </dl>
+        <form id="form-codigo" class="codigo-linha" novalidate hidden>
+          <label>Código de verificação
+            <input id="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000">
+          </label>
+          <div class="acoes">
+            <button class="botao" type="submit">Validar identidade</button>
+            <button class="botao secundario" type="button" id="reenviar">Reenviar código</button>
+          </div>
+        </form>
+        <div id="c-resposta" class="resposta" hidden>
+          <p>Resposta da Aurora Varejo</p>
+          <p id="c-resposta-texto"></p>
+        </div>
+      </div>
+    </article>
+
+    <div class="minhas" id="minhas" hidden>
+      <h3>Solicitações abertas nesta sessão</h3>
+      <ul id="lista-minhas"></ul>
+    </div>
+  </section>
+
+  <section class="painel caixa" aria-labelledby="titulo-caixa">
+    <h2 id="titulo-caixa">E-mail do cliente</h2>
+    <p class="nota" id="nota-caixa">Simulação: as mensagens que o sistema envia aparecem aqui.</p>
+    <ul class="mensagens" id="mensagens"></ul>
+    <p class="vazio" id="caixa-vazia">Nenhuma mensagem ainda. Abra uma solicitação para receber o código.</p>
+  </section>
+
+  <section class="painel dpo" aria-labelledby="titulo-dpo">
+    <h2 id="titulo-dpo">Backoffice do DPO</h2>
+    <p class="nota">Solicitações com identidade validada, ordenadas pelo prazo mais próximo.</p>
+
+    <label id="campo-token" hidden>Token do backoffice
+      <input id="token" autocomplete="off" placeholder="dev-token">
+    </label>
+
+    <div class="relogio" id="relogio" hidden>
+      <span>Data simulada: <strong id="data-simulada"></strong></span>
+      <span class="acoes">
+        <button class="botao secundario pequeno" type="button" data-dias="1">Avançar 1 dia</button>
+        <button class="botao secundario pequeno" type="button" data-dias="7">Avançar 7 dias</button>
+      </span>
+    </div>
+
+    <div class="rolagem">
+      <table>
+        <thead>
+          <tr><th scope="col">Protocolo</th><th scope="col">Direito</th><th scope="col">Prazo</th><th scope="col">Restam</th></tr>
+        </thead>
+        <tbody id="fila"></tbody>
+      </table>
+    </div>
+    <p class="vazio" id="fila-vazia">A fila está vazia. Ela recebe as solicitações assim que o cliente valida a identidade.</p>
+
+    <div class="detalhe" id="detalhe" hidden>
+      <h3 id="d-protocolo"></h3>
+      <form id="form-concluir" class="campos" novalidate>
+        <label>Resposta ao cliente
+          <textarea id="resposta" placeholder="Ex.: Segue em anexo o relatório com todos os dados pessoais que tratamos sobre você."></textarea>
+        </label>
+        <div class="acoes"><button class="botao" type="submit">Concluir e responder</button></div>
+      </form>
+      <div>
+        <h4>Trilha de auditoria</h4>
+        <ol class="linha-do-tempo" id="auditoria"></ol>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<section class="painel registro" aria-labelledby="titulo-registro">
+  <h2 id="titulo-registro">Regras de negócio em ação</h2>
+  <p class="nota">Cada recusa da API mostra o código da regra que a causou. Experimente um CPF inválido, um código errado ou abrir o mesmo pedido duas vezes.</p>
+  <ol id="registro" aria-live="polite"></ol>
+</section>
+
+<p class="rodape">Empresa, pessoas e dados desta demonstração são fictícios. Os dados ficam só na memória do servidor e somem quando ele reinicia.</p>
+</div>
+
+<script>
+const modoDemo = document.body.dataset.demo === "1";
+let token = document.body.dataset.token;
+
+const TIPOS = {
+  ACESSO: "Acesso aos dados",
+  CONFIRMACAO: "Confirmação",
+  CORRECAO: "Correção",
+  EXCLUSAO: "Exclusão",
+  PORTABILIDADE: "Portabilidade",
+  REVOGACAO_CONSENTIMENTO: "Revogação de consentimento",
+  INFO_COMPARTILHAMENTO: "Compartilhamento"
+};
+const STATUS = {
+  AGUARDANDO_VALIDACAO: "Aguardando validação",
+  EM_ANDAMENTO: "Em andamento",
+  CONCLUIDA: "Concluída",
+  ENCERRADA_SEM_VALIDACAO: "Encerrada"
+};
+const ACOES = {
+  ABERTURA: "Solicitação aberta",
+  CODIGO_ENVIADO: "Código de verificação enviado",
+  CODIGO_REENVIADO: "Novo código enviado",
+  TENTATIVA_FALHA: "Tentativa de validação falhou",
+  IDENTIDADE_VALIDADA: "Identidade validada",
+  CONCLUSAO: "Solicitação concluída",
+  ENCERRADA_SEM_VALIDACAO: "Encerrada sem validação"
+};
+
+const estado = { meus: [], atual: null, statusAtual: null, selecionado: null };
+const $ = (id) => document.getElementById(id);
+
+function el(tag, props, filhos) {
+  const n = document.createElement(tag);
+  Object.entries(props || {}).forEach(([k, v]) => {
+    if (k === "texto") n.textContent = v;
+    else if (k === "classe") n.className = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v);
+  });
+  (filhos || []).forEach((f) => n.append(f));
+  return n;
+}
+
+function dataHora(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+}
+function data(iso) {
+  const [a, m, d] = iso.slice(0, 10).split("-");
+  return `${d}/${m}/${a}`;
+}
+function agoraHora() {
+  return new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+async function api(metodo, caminho, corpo, dpo) {
+  const opcoes = { method: metodo, headers: {} };
+  if (corpo !== undefined) {
+    opcoes.headers["Content-Type"] = "application/json";
+    opcoes.body = JSON.stringify(corpo);
+  }
+  if (dpo) opcoes.headers["X-Backoffice-Token"] = token;
+  try {
+    const r = await fetch(caminho, opcoes);
+    let dados = {};
+    try { dados = await r.json(); } catch (e) { dados = {}; }
+    return { ok: r.ok, status: r.status, dados };
+  } catch (e) {
+    return { ok: false, status: 0, dados: { regra: "REDE", erro: "Servidor fora do ar. Confira se o Flask está rodando." } };
+  }
+}
+
+function registrar(tipo, regra, texto) {
+  const item = el("li", { classe: tipo }, [
+    el("span", { classe: "regra", texto: regra }),
+    el("span", { texto }),
+    el("span", { classe: "hora", texto: agoraHora() })
+  ]);
+  $("registro").prepend(item);
+}
+function recusa(resposta) {
+  registrar("recusa", resposta.dados.regra || String(resposta.status), resposta.dados.erro || "Requisição recusada");
+}
+
+function dv(digitos) {
+  const soma = digitos.reduce((acc, d, i) => acc + d * (digitos.length + 1 - i), 0);
+  return (soma * 10) % 11 % 10;
+}
+function gerarCpf() {
+  let n;
+  do { n = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10)); } while (n.every((d) => d === n[0]));
+  n.push(dv(n));
+  n.push(dv(n));
+  const s = n.join("");
+  return `${s.slice(0, 3)}.${s.slice(3, 6)}.${s.slice(6, 9)}-${s.slice(9)}`;
+}
+function mascaraCpf(valor) {
+  const d = valor.replace(/\D/g, "").slice(0, 11);
+  if (d.length > 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+  if (d.length > 6) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+  if (d.length > 3) return `${d.slice(0, 3)}.${d.slice(3)}`;
+  return d;
+}
+
+$("cpf").addEventListener("input", (e) => { e.target.value = mascaraCpf(e.target.value); });
+$("codigo").addEventListener("input", (e) => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 6); });
+
+$("exemplo").addEventListener("click", () => {
+  $("cpf").value = gerarCpf();
+  const nomes = ["ana", "carlos", "juliana", "marcos", "beatriz", "rafael"];
+  $("email").value = `${nomes[Math.floor(Math.random() * nomes.length)]}@email.com`;
+});
+
+$("form-abrir").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const r = await api("POST", "/v1/solicitacoes", {
+    cpf: $("cpf").value,
+    email: $("email").value.trim(),
+    tipo: $("tipo").value
+  });
+  if (!r.ok) {
+    recusa(r);
+    if (r.dados.protocolo_existente) selecionarMeu(r.dados.protocolo_existente);
+    return;
+  }
+  registrar("sucesso", "RF01", `Solicitação ${r.dados.protocolo} aberta. Código enviado para o e-mail.`);
+  if (!estado.meus.includes(r.dados.protocolo)) estado.meus.push(r.dados.protocolo);
+  selecionarMeu(r.dados.protocolo);
+  carregarCaixa();
+  $("codigo").focus();
+});
+
+$("form-codigo").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!estado.atual) return;
+  const r = await api("POST", `/v1/solicitacoes/${estado.atual}/validacao`, { codigo: $("codigo").value });
+  if (!r.ok) {
+    let texto = r.dados.erro || "Validação recusada";
+    const restantes = r.dados.tentativas_restantes;
+    if (restantes !== undefined) texto += restantes === 1 ? ". Resta 1 tentativa." : `. Restam ${restantes} tentativas.`;
+    registrar("recusa", r.dados.regra || String(r.status), texto);
+  } else {
+    registrar("sucesso", "RN01", `Identidade validada. Prazo legal até ${data(r.dados.prazo)}.`);
+  }
+  $("codigo").value = "";
+  await carregarAtual();
+  carregarFila();
+});
+
+$("reenviar").addEventListener("click", async () => {
+  if (!estado.atual) return;
+  const r = await api("POST", `/v1/solicitacoes/${estado.atual}/reenvio-codigo`);
+  if (!r.ok) return recusa(r);
+  registrar("sucesso", "RN05", "Novo código enviado. O anterior deixou de valer.");
+  carregarCaixa();
+  carregarAtual();
+});
+
+function selecionarMeu(protocolo) {
+  if (!estado.meus.includes(protocolo)) estado.meus.push(protocolo);
+  estado.atual = protocolo;
+  estado.statusAtual = null;
+  desenharMeus();
+  carregarAtual();
+}
+
+function desenharMeus() {
+  const lista = $("lista-minhas");
+  lista.replaceChildren(...estado.meus.map((p) => el("li", {}, [
+    el("button", { type: "button", "aria-pressed": String(p === estado.atual), texto: p, onclick: () => selecionarMeu(p) })
+  ])));
+  $("minhas").hidden = estado.meus.length < 2;
+}
+
+async function carregarAtual() {
+  if (!estado.atual) return;
+  const r = await api("GET", `/v1/solicitacoes/${estado.atual}`);
+  if (!r.ok) {
+    if (r.status === 404) {
+      registrar("recusa", "RF04", "O servidor reiniciou e as solicitações em memória foram apagadas.");
+      estado.meus = [];
+      estado.atual = null;
+      $("comprovante").hidden = true;
+      desenharMeus();
+    }
+    return;
+  }
+  const s = r.dados;
+  $("comprovante").hidden = false;
+  $("c-protocolo").textContent = s.protocolo;
+  $("c-tipo").textContent = TIPOS[s.tipo] || s.tipo;
+  $("c-cpf").textContent = s.cpf;
+  $("c-aberta").textContent = dataHora(s.aberta_em);
+  if (!s.prazo) {
+    $("c-prazo").textContent = s.status === "ENCERRADA_SEM_VALIDACAO" ? "Não iniciado" : "Começa após a validação";
+  } else if (s.status === "CONCLUIDA") {
+    $("c-prazo").textContent = `${data(s.prazo)} (respondida)`;
+  } else if (s.dias_restantes < 0) {
+    $("c-prazo").textContent = `${data(s.prazo)} (vencido)`;
+  } else {
+    $("c-prazo").textContent = `${data(s.prazo)} (${s.dias_restantes === 1 ? "falta 1 dia" : `faltam ${s.dias_restantes} dias`})`;
+  }
+  const carimbo = $("c-status");
+  if (estado.statusAtual !== s.status) {
+    carimbo.textContent = STATUS[s.status] || s.status;
+    carimbo.dataset.status = s.status;
+    carimbo.classList.remove("batendo");
+    void carimbo.offsetWidth;
+    carimbo.classList.add("batendo");
+    estado.statusAtual = s.status;
+  }
+  $("form-codigo").hidden = s.status !== "AGUARDANDO_VALIDACAO";
+  $("c-resposta").hidden = !s.resposta;
+  $("c-resposta-texto").textContent = s.resposta || "";
+}
+
+async function carregarCaixa() {
+  if (!modoDemo) return;
+  const r = await api("GET", "/demo/caixa-de-entrada");
+  if (!r.ok) return;
+  const msgs = r.dados.mensagens;
+  $("caixa-vazia").hidden = msgs.length > 0;
+  const comBotao = new Set();
+  $("mensagens").replaceChildren(...msgs.map((m) => {
+    const achado = m.mensagem.match(/^(.*\s)(\d{6})$/);
+    const codigo = achado ? achado[2] : null;
+    const texto = el("p", { classe: "texto" }, achado ? [achado[1], el("strong", { classe: "codigo", texto: codigo })] : [m.mensagem]);
+    const protocolo = (m.mensagem.match(/LGPD-\d{4}-\d{6}/) || [])[0];
+    const filhos = [
+      el("div", { classe: "cabecalho" }, [el("span", { texto: `Para ${m.destino}` }), el("span", { texto: dataHora(m.momento) })]),
+      texto
+    ];
+    if (codigo && protocolo && !comBotao.has(protocolo)) {
+      comBotao.add(protocolo);
+      filhos.push(el("button", {
+        classe: "botao secundario pequeno",
+        type: "button",
+        texto: "Usar este código",
+        onclick: () => { selecionarMeu(protocolo); $("codigo").value = codigo; $("codigo").focus(); }
+      }));
+    }
+    return el("li", { classe: "mensagem" }, filhos);
+  }));
+}
+
+async function carregarFila() {
+  if (!token) return;
+  const r = await api("GET", "/v1/backoffice/fila", undefined, true);
+  if (!r.ok) {
+    if (r.status === 401) $("fila-vazia").textContent = "Informe o token do backoffice para ver a fila.";
+    return;
+  }
+  const itens = r.dados.itens;
+  $("fila-vazia").hidden = itens.length > 0;
+  $("fila-vazia").textContent = "A fila está vazia. Ela recebe as solicitações assim que o cliente valida a identidade.";
+  $("fila").replaceChildren(...itens.map((s) => {
+    const restam = el("td", { classe: s.alerta_prazo ? "prazo-alerta" : "", texto: s.dias_restantes < 0 ? "Vencido" : s.dias_restantes === 1 ? "1 dia" : `${s.dias_restantes} dias` });
+    if (s.alerta_prazo) restam.append(el("span", { classe: "selo-alerta", texto: "RN08" }));
+    return el("tr", {
+      tabindex: "0",
+      "aria-selected": String(s.protocolo === estado.selecionado),
+      onclick: () => selecionarDpo(s.protocolo),
+      onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selecionarDpo(s.protocolo); } }
+    }, [
+      el("td", { texto: s.protocolo }),
+      el("td", { classe: "direito", texto: TIPOS[s.tipo] || s.tipo }),
+      el("td", { texto: data(s.prazo) }),
+      restam
+    ]);
+  }));
+}
+
+function selecionarDpo(protocolo) {
+  estado.selecionado = protocolo;
+  carregarDetalhe();
+  carregarFila();
+}
+
+async function carregarDetalhe() {
+  if (!estado.selecionado || !token) return;
+  const [aud, sol] = await Promise.all([
+    api("GET", `/v1/backoffice/solicitacoes/${estado.selecionado}/auditoria`, undefined, true),
+    api("GET", `/v1/solicitacoes/${estado.selecionado}`)
+  ]);
+  if (!aud.ok) return;
+  $("detalhe").hidden = false;
+  $("d-protocolo").textContent = `${estado.selecionado}, ${STATUS[sol.dados.status] || ""}`.replace(/, $/, "");
+  $("form-concluir").hidden = sol.dados.status !== "EM_ANDAMENTO";
+  $("auditoria").replaceChildren(...aud.dados.eventos.map((ev) => {
+    const atrasada = ev.acao === "CONCLUSAO" && ev.detalhe === "FORA DO PRAZO";
+    const classe = ev.acao === "TENTATIVA_FALHA" || ev.acao === "ENCERRADA_SEM_VALIDACAO" ? "falha" : atrasada ? "atraso" : ev.acao === "CONCLUSAO" ? "fim" : "";
+    const filhos = [
+      el("p", { classe: "quando", texto: `${dataHora(ev.momento)}, por ${ev.ator}` }),
+      el("p", { texto: ACOES[ev.acao] || ev.acao })
+    ];
+    if (ev.detalhe) filhos.push(el("p", { classe: "detalhe-evento", texto: ev.detalhe }));
+    return el("li", { classe }, filhos);
+  }));
+}
+
+$("form-concluir").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!estado.selecionado) return;
+  const r = await api("POST", `/v1/backoffice/solicitacoes/${estado.selecionado}/conclusao`, { resposta: $("resposta").value }, true);
+  if (!r.ok) return recusa(r);
+  registrar("sucesso", "RN10", `Solicitação ${estado.selecionado} concluída e registrada na auditoria.`);
+  $("resposta").value = "";
+  carregarDetalhe();
+  carregarFila();
+  carregarCaixa();
+  carregarAtual();
+});
+
+async function carregarTempo() {
+  if (!modoDemo) return;
+  const r = await api("GET", "/demo/tempo");
+  if (r.ok) $("data-simulada").textContent = dataHora(r.dados.agora);
+}
+
+document.querySelectorAll("[data-dias]").forEach((b) => b.addEventListener("click", async () => {
+  const dias = Number(b.dataset.dias);
+  const r = await api("POST", "/demo/tempo", { dias });
+  if (!r.ok) return recusa(r);
+  registrar("sucesso", "TEMPO", `Avançamos ${dias} ${dias === 1 ? "dia" : "dias"}. Veja os prazos e alertas na fila.`);
+  atualizarTudo();
+}));
+
+$("token").addEventListener("change", (e) => { token = e.target.value.trim(); carregarFila(); carregarDetalhe(); });
+
+function atualizarTudo() {
+  carregarAtual();
+  carregarCaixa();
+  carregarFila();
+  carregarDetalhe();
+  carregarTempo();
+}
+
+if (modoDemo) {
+  $("relogio").hidden = false;
+} else {
+  $("campo-token").hidden = false;
+  $("nota-caixa").textContent = "Modo demonstração desligado: os códigos aparecem no terminal do servidor.";
+  $("caixa-vazia").hidden = true;
+}
+
+atualizarTudo();
+setInterval(atualizarTudo, 4000);
+</script>
+</body>
+</html>

@@ -196,6 +196,54 @@ class TestCorrecoesDoTesteManual(Base):
         self.assertEqual(self.cliente.get(f"/v1/solicitacoes/{p}").json["resposta"], "Segue o relatório.")
 
 
+class TestPaginaDemo(unittest.TestCase):
+    def setUp(self):
+        self.cliente = criar_app(token_backoffice=TOKEN, modo_demo=True).test_client()
+        self.dpo = {"X-Backoffice-Token": TOKEN}
+
+    def codigo_mais_recente(self):
+        mensagem = self.cliente.get("/demo/caixa-de-entrada").json["mensagens"][0]["mensagem"]
+        return mensagem.split()[-1]
+
+    def test_pagina_inicial_carrega(self):
+        r = self.cliente.get("/")
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("text/html", r.headers["Content-Type"])
+        self.assertIn("Portal do Titular", r.get_data(as_text=True))
+
+    def test_indice_da_api_em_v1(self):
+        self.assertIn("endpoints", self.cliente.get("/v1").json)
+
+    def test_caixa_de_entrada_recebe_o_codigo(self):
+        r = self.cliente.post("/v1/solicitacoes", json={"cpf": CPF, "email": "ana@email.com", "tipo": "ACESSO"})
+        p = r.json["protocolo"]
+        codigo = self.codigo_mais_recente()
+        self.assertEqual(len(codigo), 6)
+        validacao = self.cliente.post(f"/v1/solicitacoes/{p}/validacao", json={"codigo": codigo})
+        self.assertEqual(validacao.json["status"], "EM_ANDAMENTO")
+
+    def test_avancar_tempo_liga_alerta_rn08(self):
+        p = self.cliente.post("/v1/solicitacoes", json={"cpf": CPF, "email": "ana@email.com", "tipo": "ACESSO"}).json["protocolo"]
+        self.cliente.post(f"/v1/solicitacoes/{p}/validacao", json={"codigo": self.codigo_mais_recente()})
+        self.cliente.post("/demo/tempo", json={"dias": 12})
+        self.assertTrue(self.cliente.get("/v1/backoffice/fila", headers=self.dpo).json["itens"][0]["alerta_prazo"])
+
+    def test_avancar_tempo_encerra_pendentes_rn09(self):
+        p = self.cliente.post("/v1/solicitacoes", json={"cpf": CPF, "email": "ana@email.com", "tipo": "ACESSO"}).json["protocolo"]
+        self.cliente.post("/demo/tempo", json={"dias": 8})
+        self.assertEqual(self.cliente.get(f"/v1/solicitacoes/{p}").json["status"], "ENCERRADA_SEM_VALIDACAO")
+
+    def test_avancar_tempo_valida_os_dias(self):
+        r = self.cliente.post("/demo/tempo", json={"dias": 90})
+        self.assertEqual(r.status_code, 422)
+
+    def test_rotas_demo_nao_existem_fora_do_modo_demo(self):
+        cliente = criar_app(token_backoffice=TOKEN).test_client()
+        self.assertEqual(cliente.get("/demo/caixa-de-entrada").status_code, 404)
+        self.assertEqual(cliente.post("/demo/tempo", json={"dias": 1}).status_code, 404)
+        self.assertEqual(cliente.get("/").status_code, 200)
+
+
 class TestUtilitarios(unittest.TestCase):
     def test_cpf_valido(self):
         self.assertTrue(cpf_valido(CPF))

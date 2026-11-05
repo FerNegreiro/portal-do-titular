@@ -1,22 +1,30 @@
 import os
 from functools import wraps
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, render_template, request
 
+from app.demo import CaixaDeEntrada, RelogioAjustavel
 from app.regras import RegraViolada, ServicoSolicitacoes, Status, mascarar_cpf
 
 
-def enviar_email_console(destino: str, mensagem: str) -> None:
-    print(f"[e-mail para {destino}] {mensagem}", flush=True)
-
-
-def criar_app(servico: ServicoSolicitacoes | None = None, token_backoffice: str | None = None) -> Flask:
+def criar_app(
+    servico: ServicoSolicitacoes | None = None,
+    token_backoffice: str | None = None,
+    modo_demo: bool = False,
+) -> Flask:
     app = Flask(__name__)
     app.json.ensure_ascii = False
     app.json.sort_keys = False
     app.json.mimetype = "application/json; charset=utf-8"
-    servico = servico or ServicoSolicitacoes(enviar_email=enviar_email_console)
     token = token_backoffice or os.environ.get("BACKOFFICE_TOKEN", "dev-token")
+
+    relogio = None
+    caixa = None
+    if servico is None:
+        relogio = RelogioAjustavel()
+        caixa = CaixaDeEntrada(relogio)
+        servico = ServicoSolicitacoes(enviar_email=caixa, relogio=relogio)
+    demo_ativo = modo_demo and caixa is not None
 
     def ler_json() -> dict:
         if not request.get_data():
@@ -113,10 +121,14 @@ def criar_app(servico: ServicoSolicitacoes | None = None, token_backoffice: str 
         })
 
     @app.get("/")
-    def inicio():
+    def pagina_demo():
+        return render_template("demo.html", modo_demo=demo_ativo, token=token if demo_ativo else "")
+
+    @app.get("/v1")
+    def indice_api():
         return jsonify({
             "projeto": "Portal do Titular — API de Solicitações LGPD",
-            "versao": "1.1.0",
+            "versao": "1.2.0",
             "endpoints": {
                 "abrir_solicitacao": "POST /v1/solicitacoes",
                 "consultar": "GET /v1/solicitacoes/<protocolo>",
@@ -129,8 +141,30 @@ def criar_app(servico: ServicoSolicitacoes | None = None, token_backoffice: str 
             "documentacao": "api/openapi.yaml",
         })
 
+    if demo_ativo:
+        @app.get("/demo/caixa-de-entrada")
+        def caixa_de_entrada():
+            return jsonify({"mensagens": list(caixa.mensagens)})
+
+        @app.get("/demo/tempo")
+        def tempo_atual():
+            return jsonify({"agora": servico.agora().isoformat(timespec="seconds")})
+
+        @app.post("/demo/tempo")
+        def avancar_tempo():
+            dados = ler_json()
+            dias = dados.get("dias")
+            if not isinstance(dias, int) or not 1 <= dias <= 30:
+                raise RegraViolada("DEMO", "Informe um número inteiro de dias entre 1 e 30")
+            relogio.avancar(dias)
+            servico.encerrar_sem_validacao_expiradas()
+            return jsonify({"agora": servico.agora().isoformat(timespec="seconds")})
+
     return app
 
 
 if __name__ == "__main__":
-    criar_app().run(debug=True)
+    demo = os.environ.get("MODO_DEMO", "1") == "1"
+    if demo:
+        print("Modo demonstração ligado: abra http://127.0.0.1:5000 no navegador.", flush=True)
+    criar_app(modo_demo=demo).run(debug=True)

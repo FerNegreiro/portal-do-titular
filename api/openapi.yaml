@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Portal do Titular — API de Solicitações LGPD
-  version: 1.1.0
+  version: 1.2.0
   description: >
     API pública do Portal do Titular da Aurora Varejo. Cada erro de regra de negócio
     retorna o código da regra violada (RNxx), rastreável ao documento de requisitos.

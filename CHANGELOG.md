@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.0 — Demonstração visual
+
+- Página em `http://127.0.0.1:5000` para percorrer o fluxo completo sem terminal: cliente, e-mail simulado, backoffice do DPO e trilha de auditoria.
+- Painel "Regras de negócio em ação", mostrando o código da regra em cada recusa da API.
+- Data simulada ajustável para demonstrar o alerta de prazo (RN08) e o encerramento automático (RN09).
+- Modo demonstração ligado por padrão e desligável com `MODO_DEMO=0`; as rotas `/demo/*` não existem fora dele.
+- Índice da API movido de `/` para `/v1`.
+- 7 testes novos, totalizando 31.
+
 ## 1.1.0 — Correções encontradas no teste manual
 
 Durante o teste exploratório da API pelo PowerShell (Windows PowerShell 5.1), foram encontrados três problemas. Cada um ganhou um teste automatizado antes da correção.
